@@ -1,0 +1,23 @@
+PCBNEW-LibModule-V1  17/06/2014 18:27:24
+# encoding utf-8
+Units mm
+$INDEX
+IN14
+$EndINDEX
+$MODULE IN14
+Po 0 0 0 15 53A07801 00000000 ~~
+Li IN14
+Sc 0
+AR 
+Op 0 0 0
+T0 0 -8.89 1 1 0 0.15 N V 21 N "IN14"
+T1 0 11.43 1 1 0 0.15 N V 21 N "TUBE**"
+$PAD
+Sh "1" C 1.5 1.5 0 0 0
+Dr 0.6 0 0
+At STD N 00E0FFFF
+Ne 0 ""
+Po 0 0
+$EndPAD
+$EndMODULE IN14
+$EndLIBRARY
