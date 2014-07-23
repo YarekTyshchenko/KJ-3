@@ -51,7 +51,7 @@ void Tube::flashDots(int state) {
     unsigned int data3 = (_mapDot5(state) * 4096) + _mapDot6(state);
 
   
-  _shiftOut(data1, data2, data3);
+  _shiftOut(_data1|data1, _data2|data2, _data3|data3);
 } else {
   _shiftOut(_data1, _data2, _data3);
 }

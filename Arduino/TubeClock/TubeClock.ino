@@ -3,11 +3,11 @@
 #include <Time.h>
 
 //Pin connected to ST_CP of 74HC595
-int latchPin = 10;
+int latchPin = 5; //10
 //Pin connected to SH_CP of 74HC595
-int clockPin = 12;
+int clockPin = 7; //12
 ////Pin connected to DS of 74HC595
-int dataPin = 11;
+int dataPin = 6; //11
 
 
 Tube tube(clockPin, dataPin, latchPin);
@@ -31,28 +31,28 @@ uint8_t clientPort = 123;
 uint32_t timeLong;
 
 void setupNtp() {
-  //Serial.println( F("EtherCard/Nanode NTP Client" ) );
+  Serial.println( F("EtherCard/Nanode NTP Client" ) );
 
   uint8_t rev = ether.begin(sizeof Ethernet::buffer, mymac);
-  //Serial.print( F("\nENC28J60 Revision ") );
-  //Serial.println( rev, DEC );
+  Serial.print( F("\nENC28J60 Revision ") );
+  Serial.println( rev, DEC );
   if ( rev == 0) 
     Serial.println( F( "Failed to access Ethernet controller" ) );
 
-  //Serial.println( F( "Setting up DHCP" ));
+  Serial.println( F( "Setting up DHCP" ));
   //if (!ether.dhcpSetup())
   //  Serial.println( F( "DHCP failed" ));
   //Serial.println("Setting up Static IP");
   ether.staticSetup(myip, gwip);
-  //while (ether.clientWaitingGw()) {
-  //  ether.packetLoop(ether.packetReceive());
-  //}
-  //Serial.println("Gateway found");
+  while (ether.clientWaitingGw()) {
+    ether.packetLoop(ether.packetReceive());
+  }
+  Serial.println("Gateway found");
 
-  //ether.printIp("My IP: ", ether.myip);
+  ether.printIp("My IP: ", ether.myip);
   //ether.printIp("Netmask: ", ether.mymask);
-  //ether.printIp("GW IP: ", ether.gwip);
-  //ether.printIp("DNS IP: ", ether.dnsip);
+  ether.printIp("GW IP: ", ether.gwip);
+  ether.printIp("DNS IP: ", ether.dnsip);
 }
 void sendNtpRequest() {
   //if (!ether.dnsLookup("ntp2d.mcc.ac.uk")) {
@@ -77,6 +77,10 @@ void receiveNtpPacket() {
     // Has unprocessed packet response
     if (plen > 0) {
       if (ether.ntpProcessAnswer(&timeLong,clientPort)) {
+        Serial.println(timeLong);
+        tube.flashDots(3);
+        delay(100);
+        tube.flashDots(0);
         syncTimePointer((long)timeLong - seventy_years);
       }
     }
