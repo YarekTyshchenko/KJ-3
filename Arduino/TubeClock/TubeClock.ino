@@ -3,11 +3,11 @@
 #include <Time.h>
 
 //Pin connected to ST_CP of 74HC595
-int latchPin = 5; //10
+int latchPin = 6; //10
 //Pin connected to SH_CP of 74HC595
-int clockPin = 7; //12
+int clockPin = 5; //12
 ////Pin connected to DS of 74HC595
-int dataPin = 6; //11
+int dataPin = 7; //11
 
 
 Tube tube(clockPin, dataPin, latchPin);
@@ -44,9 +44,9 @@ void setupNtp() {
   //  Serial.println( F( "DHCP failed" ));
   //Serial.println("Setting up Static IP");
   ether.staticSetup(myip, gwip);
-  while (ether.clientWaitingGw()) {
-    ether.packetLoop(ether.packetReceive());
-  }
+  //while (ether.clientWaitingGw()) {
+    //ether.packetLoop(ether.packetReceive());
+  //}
   Serial.println("Gateway found");
 
   ether.printIp("My IP: ", ether.myip);
@@ -144,8 +144,11 @@ void setup(){
   tube.show(0,0,0);
   Serial.begin(19200);
   delay(5000);
+  tube.show(1,0,0);
   setupNtp();
+  tube.show(2,0,0);
   setupTime();
+  tube.show(3,0,0);
   lastUpdate = millis();
 }
 uint32_t flashUpdate = 0;
