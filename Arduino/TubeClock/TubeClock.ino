@@ -79,7 +79,7 @@ void receiveNtpPacket() {
       if (ether.ntpProcessAnswer(&timeLong,clientPort)) {
         Serial.println(timeLong);
         tube.flashDots(3);
-        delay(100);
+        delay(10);
         tube.flashDots(0);
         syncTimePointer((long)timeLong - seventy_years);
       }
