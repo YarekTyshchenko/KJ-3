@@ -1,6 +1,15 @@
 #include "Tube.h"
 #include <EtherCard.h>
 #include <Time.h>
+#include <Timezone.h>
+
+//United Kingdom (London, Belfast)
+TimeChangeRule BST = {"BST", Last, Sun, Mar, 1, 60};        //British Summer Time
+TimeChangeRule GMT = {"GMT", Last, Sun, Oct, 2, 0};         //Standard Time
+Timezone UK(BST, GMT);
+
+TimeChangeRule *tcr;        //pointer to the time change rule, use to get the TZ abbrev
+time_t utc;
 
 //Pin connected to ST_CP of 74HC595
 int latchPin = 6; //10
@@ -59,14 +68,16 @@ void sendNtpRequest() {
   //  Serial.println( F("DNS failed" ));
   //} else {
   //  ether.printIp("SRV: ", ether.hisip);
-    ether.ntpRequest(ntpip, ++clientPort);
+    ether.ntpRequest(ntpip, clientPort);
   //}
 }
-const  long timeZoneOffset = -3600L; // set this to the offset in seconds to your local time;
+
 typedef void (*ntpCallback)(uint32_t);
+
 ntpCallback syncTimePointer;
+
 void receiveNtpPacket() {
-  const unsigned long seventy_years = 2208988800UL + timeZoneOffset;
+  const unsigned long seventy_years = 2208988800UL;
   int plen = 0;
   uint32_t nowTime;
   
@@ -117,7 +128,8 @@ void digitalClockDisplay(){
   Serial.print(year()); 
   Serial.println();
   */
-  tube.show(hour(), minute(), second());
+  time_t localTime = UK.toLocal(utc, &tcr);
+  tube.show(hour(localTime), minute(localTime), second(localTime));
 }
 
 void printDigits(int digits){
@@ -151,9 +163,10 @@ void setup(){
   tube.show(3,0,0);
   lastUpdate = millis();
 }
+
 uint32_t flashUpdate = 0;
+
 void loop(){
-  
   receiveNtpPacket();
   loopTime();
     if(!ether.clientWaitingGw() && lastUpdate + 2000L < millis() ) {
