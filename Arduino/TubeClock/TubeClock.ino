@@ -15,13 +15,13 @@ Tube tube(clockPin, dataPin, latchPin);
 static uint8_t mymac[6] = { 0x54,0x55,0x58,0x10,0x00,0x25};
 
 // IP and netmask allocated by DHCP
-static uint8_t myip[4] = { 192,168,1,78 };
+static uint8_t myip[4] = { 192,168,15,78 };
 static uint8_t mynetmask[4] = { 255,255,255,0 };
-static uint8_t gwip[4] = { 192,168,1,254 };
-static uint8_t dnsip[4] = { 192,168,1,254 };
-static uint8_t dhcpsvrip[4] = { 192,168,1,254 };
+static uint8_t gwip[4] = { 192,168,15,1 };
+static uint8_t dnsip[4] = { 192,168,15,1 };
+static uint8_t dhcpsvrip[4] = { 192,168,1,14 };
 //static uint8_t ntpip[4] = { 91,189,94,4 };
-static uint8_t ntpip[4] = { 192,168,1,25 };
+static uint8_t ntpip[4] = { 192,168,15,25 };
 
 // Packet buffer, must be big enough to packet and payload
 #define BUFFER_SIZE 550
@@ -33,20 +33,20 @@ uint32_t timeLong;
 void setupNtp() {
   Serial.println( F("EtherCard/Nanode NTP Client" ) );
 
-  uint8_t rev = ether.begin(sizeof Ethernet::buffer, mymac);
+  uint8_t rev = ether.begin(sizeof Ethernet::buffer, mymac, 8);
   Serial.print( F("\nENC28J60 Revision ") );
   Serial.println( rev, DEC );
   if ( rev == 0) 
     Serial.println( F( "Failed to access Ethernet controller" ) );
 
-  Serial.println( F( "Setting up DHCP" ));
-  //if (!ether.dhcpSetup())
-  //  Serial.println( F( "DHCP failed" ));
-  //Serial.println("Setting up Static IP");
-  ether.staticSetup(myip, gwip);
-  //while (ether.clientWaitingGw()) {
+  //Serial.println( F( "Setting up DHCP" ));
+  if (!ether.dhcpSetup()) {
+    Serial.println( F( "DHCP failed" ));
+    ether.staticSetup(myip, gwip);
+    Serial.println("Setting up Static IP");
+    //while (ether.clientWaitingGw()) {
     //ether.packetLoop(ether.packetReceive());
-  //}
+  }
   Serial.println("Gateway found");
 
   ether.printIp("My IP: ", ether.myip);
