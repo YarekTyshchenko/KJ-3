@@ -41,17 +41,22 @@ uint32_t timeLong;
 
 void setupNtp() {
   Serial.println( F("EtherCard/Nanode NTP Client" ) );
-
-  uint8_t rev = ether.begin(sizeof Ethernet::buffer, mymac, 8);
+  tube.show(1,2,0);
+  uint8_t rev = ether.begin(sizeof Ethernet::buffer, mymac, 10);
   Serial.print( F("\nENC28J60 Revision ") );
   Serial.println( rev, DEC );
-  if ( rev == 0) 
+  if ( rev == 0) {
+    tube.show(0,9,0);
+    while(1);
     Serial.println( F( "Failed to access Ethernet controller" ) );
+  }
 
   //Serial.println( F( "Setting up DHCP" ));
   if (!ether.dhcpSetup()) {
     Serial.println( F( "DHCP failed" ));
+    tube.show(0,8,0);
     ether.staticSetup(myip, gwip);
+    tube.show(0,7,0);
     Serial.println("Setting up Static IP");
     //while (ether.clientWaitingGw()) {
     //ether.packetLoop(ether.packetReceive());
@@ -128,8 +133,9 @@ void digitalClockDisplay(){
   Serial.print(year()); 
   Serial.println();
   */
-  time_t localTime = UK.toLocal(utc, &tcr);
+  time_t localTime = UK.toLocal(now(), &tcr);
   tube.show(hour(localTime), minute(localTime), second(localTime));
+  //tube.show(hour(), minute(), second());
 }
 
 void printDigits(int digits){
@@ -153,7 +159,7 @@ void loopTime() {
 
 uint32_t lastUpdate = 0;
 void setup(){
-  tube.show(0,0,0);
+  tube.show(9,9,9);
   Serial.begin(19200);
   delay(5000);
   tube.show(1,0,0);
@@ -161,6 +167,7 @@ void setup(){
   tube.show(2,0,0);
   setupTime();
   tube.show(3,0,0);
+  delay(5000);
   lastUpdate = millis();
 }
 
