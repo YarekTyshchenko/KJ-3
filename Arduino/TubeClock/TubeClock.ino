@@ -70,7 +70,7 @@ void loop() {
     }
 
     // Every day at 2am
-    if (nowTime % 24*3600 == 2*3600) {
-        tube.degauss(5);
+    if (nowTime % (24*3600) == (2*3600)) {
+        tube.degauss(30);
     }
 }

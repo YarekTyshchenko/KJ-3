@@ -65,7 +65,7 @@ void Tube::degauss(int passes) {
         while (number++ < 9) {
             int d = number * 10 + number;
             show(d, d, d);
-            delay(100);
+            delay(500);
         }
     }
 }
