@@ -42,41 +42,28 @@ uint8_t clientPort = 123;
 uint32_t timeLong;
 
 void setupNtp() {
-  Serial.println( F("EtherCard/Nanode NTP Client" ) );
-  tube.show(1,2,0);
-  uint8_t rev = ether.begin(sizeof Ethernet::buffer, mymac, 10);
-  Serial.print( F("\nENC28J60 Revision ") );
-  Serial.println( rev, DEC );
-  if ( rev == 0) {
-    tube.show(0,9,0);
-    while(1);
-    Serial.println( F( "Failed to access Ethernet controller" ) );
-  }
+    tube.show(1,2,0);
+    uint8_t rev = ether.begin(sizeof Ethernet::buffer, mymac, 10);
+    if ( rev == 0) {
+        tube.show(0,9,0);
+        while(1);
+    }
 
-  //Serial.println( F( "Setting up DHCP" ));
-  if (!ether.dhcpSetup()) {
-    Serial.println( F( "DHCP failed" ));
-    tube.show(0,8,0);
-    ether.staticSetup(myip, gwip);
-    tube.show(0,7,0);
-    Serial.println("Setting up Static IP");
-    //while (ether.clientWaitingGw()) {
-    //ether.packetLoop(ether.packetReceive());
-  }
-  Serial.println("Gateway found");
-
-  ether.printIp("My IP: ", ether.myip);
-  //ether.printIp("Netmask: ", ether.mymask);
-  ether.printIp("GW IP: ", ether.gwip);
-  ether.printIp("DNS IP: ", ether.dnsip);
+    if (!ether.dhcpSetup()) {
+        tube.show(0,8,0);
+        ether.staticSetup(myip, gwip);
+        tube.show(0,7,0);
+        //while (ether.clientWaitingGw()) {
+        //ether.packetLoop(ether.packetReceive());
+    }
 }
 void sendNtpRequest() {
-  //if (!ether.dnsLookup("ntp2d.mcc.ac.uk")) {
-  //  Serial.println( F("DNS failed" ));
-  //} else {
-  //  ether.printIp("SRV: ", ether.hisip);
+    //if (!ether.dnsLookup("ntp2d.mcc.ac.uk")) {
+    //  Serial.println( F("DNS failed" ));
+    //} else {
+    //  ether.printIp("SRV: ", ether.hisip);
     ether.ntpRequest(ntpip, clientPort);
-  //}
+    //}
 }
 
 typedef void (*ntpCallback)(uint32_t);
@@ -84,95 +71,92 @@ typedef void (*ntpCallback)(uint32_t);
 ntpCallback syncTimePointer;
 
 void receiveNtpPacket() {
-  const unsigned long seventy_years = 2208988800UL;
-  int plen = 0;
-  uint32_t nowTime;
-  
+    const unsigned long seventy_years = 2208988800UL;
+    int plen = 0;
+    uint32_t nowTime;
+
     // Main processing loop now we have our addresses
     // handle ping and wait for a tcp packet
     plen = ether.packetReceive();
     ether.packetLoop(plen);
     // Has unprocessed packet response
     if (plen > 0) {
-      if (ether.ntpProcessAnswer(&timeLong,clientPort)) {
-        Serial.println(timeLong);
-        tube.flashDots(3);
-        delay(10);
-        tube.flashDots(0);
-        syncTimePointer((long)timeLong - seventy_years);
-      }
+        if (ether.ntpProcessAnswer(&timeLong,clientPort)) {
+            Serial.println(timeLong);
+            tube.flashDots(3);
+            delay(10);
+            tube.flashDots(0);
+            syncTimePointer((long)timeLong - seventy_years);
+        }
     }
 }
 // =============================================================================
 
 void syncTime(uint32_t time)
 {
-  setTime(time);
+    setTime(time);
 }
 
 // Time stuff
 time_t prevDisplay = 0; // when the digital clock was displayed
 
 void setupTime() {
-  syncTimePointer = syncTime;
+    syncTimePointer = syncTime;
 }
 
 void digitalClockDisplay(){
-  time_t localTime = UK.toLocal(now(), &tcr);
-  tube.show(hour(localTime), minute(localTime), second(localTime));
+    time_t localTime = UK.toLocal(now(), &tcr);
+    tube.show(hour(localTime), minute(localTime), second(localTime));
 }
 
 int flash = 0;
 void loopTime() {
-  if( now() != prevDisplay) //update the display only if the time has changed
-  {
-    prevDisplay = now();
-    digitalClockDisplay();
-  }
-  if (millis() % 100 < 50) {
-    //tube.flashDots(1);
-  }
+    //update the display only if the time has changed
+    if (now() != prevDisplay) {
+        prevDisplay = now();
+        digitalClockDisplay();
+    }
+    if (millis() % 100 < 50) {
+        //tube.flashDots(1);
+    }
 }
 
 uint32_t lastUpdate = 0;
 
 void setup(){
-  // Go through a POST sequence
-  tube.show(9,9,9);
-  //Serial.begin(19200);
-  //delay(5000);
-  tube.show(1,0,0);
-  setupNtp();
-  tube.show(2,0,0);
-  setupTime();
-  tube.show(3,0,0);
-  //delay(5000);
-  lastUpdate = millis();
+    // Go through a POST sequence
+    tube.show(9,9,9);
+    //Serial.begin(19200);
+    //delay(5000);
+    tube.show(1,0,0);
+    setupNtp();
+    tube.show(2,0,0);
+    setupTime();
+    tube.show(3,0,0);
+    //delay(5000);
+    lastUpdate = millis();
 }
 
 uint32_t flashUpdate = 0;
 
 void loop(){
-  receiveNtpPacket();
-  loopTime();
+    receiveNtpPacket();
+    loopTime();
     // @TODO: Fix the hangup on clientWaitingGw when not dhcp
     // And do clever updates based on how long ago we synced
     if(!ether.clientWaitingGw() && lastUpdate + 2000L < millis() ) {
-      lastUpdate = millis();
-      sendNtpRequest();
+        lastUpdate = millis();
+        sendNtpRequest();
     }
     // WTF Flashing dots?
     if (flashUpdate + 100L < millis()) {
-      flashUpdate = millis();
+        flashUpdate = millis();
 
-  if (flash == 0) {
-    flash = 3;
-    //tube.flashDots(flash);
-  } else {
-    flash = 0;
-  }
-
+        if (flash == 0) {
+            flash = 3;
+            //tube.flashDots(flash);
+        } else {
+            flash = 0;
+        }
     }
 }
-
-// End
