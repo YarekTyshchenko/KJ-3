@@ -59,6 +59,17 @@ void Tube::flashDots(int state) {
 }
 }
 
+void Tube::degauss(int passes) {
+    while (passes--) {
+        int number = 0;
+        while (number++ < 9) {
+            int d = number * 10 + number;
+            show(d, d, d);
+            delay(100);
+        }
+    }
+}
+
 
 unsigned long Tube::_mapTube1(int number) {
   switch (number) {

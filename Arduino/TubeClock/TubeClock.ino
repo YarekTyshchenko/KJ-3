@@ -68,4 +68,9 @@ void loop() {
         prevDisplay = nowTime;
         digitalClockDisplay(nowTime);
     }
+
+    // Every day at 2am
+    if (nowTime % 24*3600 == 2*3600) {
+        tube.degauss(5);
+    }
 }

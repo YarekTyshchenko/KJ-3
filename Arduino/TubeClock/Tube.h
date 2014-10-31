@@ -9,6 +9,7 @@ class Tube
     Tube(int clockPin, int dataPin, int latchPin);
     void show(int n1, int n2, int n3);
     void flashDots(int state);
+    void degauss(int passes);
   private:
     unsigned long _mapTube1(int number);
     unsigned long _mapTube2(int number);
