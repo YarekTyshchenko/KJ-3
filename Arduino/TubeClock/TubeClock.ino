@@ -44,14 +44,15 @@ void syncTime(uint32_t time)
     //digitalClockDisplay();
 }
 
+uint32_t lastUpdate = 0;
 void setup() {
     // Go through a POST sequence
+    tube.show(0,0,0);
     ntpClient.setNtpCallback(syncTime);
     int result = ntpClient.init();
-    ntpClient.update();
+    lastUpdate = millis();
 }
 
-uint32_t lastUpdate = 0;
 time_t prevDisplay = 0; // when the digital clock was displayed
 time_t nowTime;
 void loop() {
