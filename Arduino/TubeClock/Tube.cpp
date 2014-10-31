@@ -15,6 +15,8 @@ Tube::Tube(int clockPin, int dataPin, int latchPin)
 
 }
 
+// Integers for each of the digits
+// @TODO: make -1 show nothing, and -2 -3 (-4) show dots
 void Tube::show(int n3, int n2, int n1)
 {
     int t1 = n1/10;

@@ -3,13 +3,14 @@
 #include <Time.h>
 #include <Timezone.h>
 
+// ======================== Move to Timezone.h =================================
 //United Kingdom (London, Belfast)
 TimeChangeRule BST = {"BST", Last, Sun, Mar, 1, 60};        //British Summer Time
 TimeChangeRule GMT = {"GMT", Last, Sun, Oct, 2, 0};         //Standard Time
 Timezone UK(BST, GMT);
 
 TimeChangeRule *tcr;        //pointer to the time change rule, use to get the TZ abbrev
-time_t utc;
+//==============================================================================
 
 //Pin connected to ST_CP of 74HC595
 int latchPin = 6; //10
@@ -18,9 +19,10 @@ int clockPin = 5; //12
 ////Pin connected to DS of 74HC595
 int dataPin = 7; //11
 
-
+// Setup the tube display interface
 Tube tube(clockPin, dataPin, latchPin);
 
+// ============================== Move to NTPClient.h ==========================
 static uint8_t mymac[6] = { 0x54,0x55,0x58,0x10,0x00,0x25};
 
 // IP and netmask allocated by DHCP
@@ -101,6 +103,7 @@ void receiveNtpPacket() {
       }
     }
 }
+// =============================================================================
 
 void syncTime(uint32_t time)
 {
@@ -111,40 +114,14 @@ void syncTime(uint32_t time)
 time_t prevDisplay = 0; // when the digital clock was displayed
 
 void setupTime() {
-  //Serial.println("waiting for sync");
   syncTimePointer = syncTime;
-  //setSyncProvider(getNtpTime);
-  //setSyncInterval(5); // Set seconds between re-sync (5s for test only)
-  //while(timeStatus()== timeNotSet)   
-  //   ; // wait until the time is set by the sync provider
 }
 
 void digitalClockDisplay(){
-  // digital clock display of the time
-  /*
-  Serial.print(hour());
-  printDigits(minute());
-  printDigits(second());
-  Serial.print(" ");
-  Serial.print(day());
-  Serial.print(" ");
-  Serial.print(month());
-  Serial.print(" ");
-  Serial.print(year()); 
-  Serial.println();
-  */
   time_t localTime = UK.toLocal(now(), &tcr);
   tube.show(hour(localTime), minute(localTime), second(localTime));
-  //tube.show(hour(), minute(), second());
 }
 
-void printDigits(int digits){
-  // utility function for digital clock display: prints preceding colon and leading 0
-  Serial.print(":");
-  if(digits < 10)
-    Serial.print('0');
-  Serial.print(digits);
-}
 int flash = 0;
 void loopTime() {
   if( now() != prevDisplay) //update the display only if the time has changed
@@ -158,16 +135,18 @@ void loopTime() {
 }
 
 uint32_t lastUpdate = 0;
+
 void setup(){
+  // Go through a POST sequence
   tube.show(9,9,9);
-  Serial.begin(19200);
-  delay(5000);
+  //Serial.begin(19200);
+  //delay(5000);
   tube.show(1,0,0);
   setupNtp();
   tube.show(2,0,0);
   setupTime();
   tube.show(3,0,0);
-  delay(5000);
+  //delay(5000);
   lastUpdate = millis();
 }
 
@@ -176,10 +155,13 @@ uint32_t flashUpdate = 0;
 void loop(){
   receiveNtpPacket();
   loopTime();
+    // @TODO: Fix the hangup on clientWaitingGw when not dhcp
+    // And do clever updates based on how long ago we synced
     if(!ether.clientWaitingGw() && lastUpdate + 2000L < millis() ) {
       lastUpdate = millis();
       sendNtpRequest();
     }
+    // WTF Flashing dots?
     if (flashUpdate + 100L < millis()) {
       flashUpdate = millis();
 
