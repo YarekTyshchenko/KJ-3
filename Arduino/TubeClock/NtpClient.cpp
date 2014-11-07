@@ -9,13 +9,10 @@ static uint8_t gwip[4] = { 192,168,15,1 };
 uint8_t clientPort = 123;
 static uint8_t ntpip[4] = { 192,168,15,25 };
 uint32_t timeLong;
-
-
-NtpClient::NtpClient(uint8_t *macAddress)
-{
-    _macAddress = macAddress;
+udpCallback _udpCallbackPointer;
+void _udpCallback(word port, byte ip[4], const char *data, word len) {
+    _udpCallbackPointer(data, len);
 }
-
 
 // ============================== Move to NTPClient.h ==========================
 // IP and netmask allocated by DHCP
@@ -26,7 +23,10 @@ static uint8_t dhcpsvrip[4] = { 192,168,1,14 };
 */
 // =============================================================================
 
-
+NtpClient::NtpClient(uint8_t *macAddress)
+{
+    _macAddress = macAddress;
+}
 
 int NtpClient::init()
 {
@@ -75,5 +75,10 @@ void NtpClient::update() {
 
 void NtpClient::setNtpCallback(ntpCallback callbackPointer) {
     _callbackPointer = callbackPointer;
+}
+
+void NtpClient::udpListen(udpCallback callback, uint16_t port) {
+    _udpCallbackPointer = callback;
+    ether.udpServerListenOnPort(&_udpCallback, port);
 }
 

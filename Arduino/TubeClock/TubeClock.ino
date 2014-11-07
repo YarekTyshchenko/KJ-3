@@ -26,6 +26,13 @@ Tube tube(clockPin, dataPin, latchPin);
 static uint8_t macAddress[6] = { 0x54,0x55,0x58,0x10,0x00,0x25};
 NtpClient ntpClient(macAddress);
 
+//Disable tubes on any UDP request
+void udpSerialPrint(const char *data, word len) {
+    tube.show(-1,-1,-1);
+    while(1);
+}
+
+
 uint32_t timeout = 0;
 bool dots = false;
 uint32_t resetMillis = 0L;
@@ -66,6 +73,8 @@ void setup() {
     tube.show(-1,-1,1);
     int result = ntpClient.init();
     tube.show(-1,-1,2);
+    ntpClient.udpListen(&udpSerialPrint, 1337);
+    tube.show(-1,-1,3);
     lastUpdate = millis();
 }
 
