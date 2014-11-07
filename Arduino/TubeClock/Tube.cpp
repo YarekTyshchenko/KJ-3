@@ -80,17 +80,10 @@ void Tube::_shiftOut(unsigned long _data1, unsigned long _data2, unsigned long _
 }
 
 void Tube::flashDots(int state) {
-  if (state > 0) {
-
     unsigned int data1 = (_mapDot1(state) * 4096) + _mapDot2(state);
     unsigned int data2 = (_mapDot3(state) * 4096) + _mapDot4(state);
     unsigned int data3 = (_mapDot5(state) * 4096) + _mapDot6(state);
-
-  
-  _shiftOut(_data1|data1, _data2|data2, _data3|data3);
-} else {
-  _shiftOut(_data1, _data2, _data3);
-}
+    _shiftOut(data1, data2, data3);
 }
 
 void Tube::degauss(int passes) {

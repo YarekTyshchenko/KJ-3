@@ -32,12 +32,16 @@ uint32_t resetMillis = 0L;
 // Display new time on the tubes
 void digitalClockDisplay(time_t time) {
     uint32_t nowMillis = millis() - resetMillis;
-    if (dots && nowMillis < 500) {
-        tube.flashDots(3);
+    if (dots) {
+        if (nowMillis < 20) {
+            tube.flashDots(2);
+        } else {
+            tube.show(-1,-1,-1);
+        }
     } else {
         tube.show(hour(time), minute(time), second(time));
     }
-    dots = !dots;
+    //dots = !dots;
 }
 
 
