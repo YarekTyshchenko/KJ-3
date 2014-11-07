@@ -17,17 +17,51 @@ Tube::Tube(int clockPin, int dataPin, int latchPin)
 
 // Integers for each of the digits
 // @TODO: make -1 show nothing, and -2 -3 (-4) show dots
+// Input | LD | RD |
+//    -1 |    |    |  0
+//    -2 |    |  . |  1
+//    -3 |    | .  |  2
+//    -4 |    | .. |  3
+//    -5 |  . |    |  4
+//    -6 |  . |  . |  5
+//    -7 |  . | .  |  6
+//    -8 |  . | .. |  7
+//    -9 | .  |    |  8
+//   -10 | .  |  . |  9
+//   -11 | .  | .  | 10
+//   -12 | .  | .. | 11
+//   -13 | .. |    | 12
+//   -14 | .. |  . | 13
+//   -15 | .. | .  | 14
+//   -16 | .. | .. | 15
+
 void Tube::show(int n3, int n2, int n1)
 {
-    int t1 = n1/10;
-    int t2 = n1 % 10;
-    int t3 = n2/10;
-    int t4 = n2 % 10;
-    int t5 = n3/10;
-    int t6 = n3 % 10;
-    _data1 = (_mapTube1(t2) * 4096) + _mapTube2(t1);
-    _data2 = (_mapTube3(t4) * 4096) + _mapTube4(t3);
-    _data3 = (_mapTube5(t6) * 4096) + _mapTube6(t5);
+    if (n1 >= 0) {
+        int t1 = n1/10;
+        int t2 = n1 % 10;
+        _data1 = (_mapTube1(t2) * 4096) + _mapTube2(t1);
+    } else {
+        //(_mapDot1(state) * 4096) + _mapDot2(state);
+        _data1 = B0;
+    }
+
+    if (n2 >= 0) {
+        int t3 = n2/10;
+        int t4 = n2 % 10;
+        _data2 = (_mapTube3(t4) * 4096) + _mapTube4(t3);
+    } else {
+        _data2 = B0;
+    }
+
+    if (n3 >= 0) {
+        int t5 = n3/10;
+        int t6 = n3 % 10;
+        _data3 = (_mapTube5(t6) * 4096) + _mapTube6(t5);
+    } else {
+        _data3 = B0;
+    }
+
     _shiftOut(_data1, _data2, _data3);
 }
 

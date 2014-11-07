@@ -26,16 +26,26 @@ Tube tube(clockPin, dataPin, latchPin);
 static uint8_t macAddress[6] = { 0x54,0x55,0x58,0x10,0x00,0x25};
 NtpClient ntpClient(macAddress);
 
+uint32_t timeout = 0;
+bool dots = false;
+uint32_t resetMillis = 0L;
 // Display new time on the tubes
 void digitalClockDisplay(time_t time) {
-    time_t localTime = UK.toLocal(time, &tcr);
-    tube.show(hour(localTime), minute(localTime), second(localTime));
+    uint32_t nowMillis = millis() - resetMillis;
+    if (dots && nowMillis < 500) {
+        tube.flashDots(3);
+    } else {
+        tube.show(hour(time), minute(time), second(time));
+    }
+    dots = !dots;
 }
+
 
 // Time sync callback function
 void syncTime(uint32_t time)
 {
     // Set it into hardware clock
+    resetMillis = millis();
     setTime(time);
 
     // Flash the dots to say that we are synced
@@ -44,17 +54,19 @@ void syncTime(uint32_t time)
     //digitalClockDisplay();
 }
 
-uint32_t lastUpdate = 0;
+uint32_t lastUpdate = 0L;
 void setup() {
     // Go through a POST sequence
-    tube.show(0,0,0);
+    tube.show(-1,-1,0);
     ntpClient.setNtpCallback(syncTime);
+    tube.show(-1,-1,1);
     int result = ntpClient.init();
+    tube.show(-1,-1,2);
     lastUpdate = millis();
 }
 
 time_t prevDisplay = 0; // when the digital clock was displayed
-time_t nowTime;
+time_t localTime;
 void loop() {
     ntpClient.processNtpPacket();
     // @TODO: Do clever updates based on how long ago we synced
@@ -63,15 +75,13 @@ void loop() {
         ntpClient.update();
     }
 
-    // Only update the tube display when we need to
-    nowTime = now();
-    if (nowTime != prevDisplay) {
-        prevDisplay = nowTime;
-        digitalClockDisplay(nowTime);
+    // Calculate the local time every second
+    if (now() != prevDisplay) {
+        prevDisplay = now();
+        resetMillis = millis();
+        localTime = UK.toLocal(now(), &tcr);
     }
 
-    // Every day at 2am
-    if (nowTime % (24*3600) == (2*3600)) {
-        tube.degauss(30);
-    }
+    // Display the time every loop
+    digitalClockDisplay(localTime);
 }
