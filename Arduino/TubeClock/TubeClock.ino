@@ -58,6 +58,7 @@ void syncTime(uint32_t time)
     // Set it into hardware clock
     resetMillis = millis();
     setTime(time);
+    ntpClient.udpSend("Updated from NTP\n", "192.168.15.25", 8000);
 
     // Flash the dots to say that we are synced
     //tube.show(0,0,0);

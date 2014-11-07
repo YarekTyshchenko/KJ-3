@@ -16,6 +16,7 @@ public:
     void update();
     void setNtpCallback(ntpCallback callbackPointer);
     void udpListen(udpCallback callback, uint16_t port);
+    void udpSend(char payload[], char address[], uint8_t port);
 
 private:
     uint8_t *_macAddress;

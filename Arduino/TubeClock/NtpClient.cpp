@@ -82,3 +82,9 @@ void NtpClient::udpListen(udpCallback callback, uint16_t port) {
     ether.udpServerListenOnPort(&_udpCallback, port);
 }
 
+void NtpClient::udpSend(char payload[], char address[], uint8_t port) {
+    uint8_t ipDestinationAddress[4];
+    ether.parseIp(ipDestinationAddress, address);
+    ether.sendUdp(payload, sizeof(payload), 5678, ipDestinationAddress, port);
+}
+
