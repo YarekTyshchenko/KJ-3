@@ -38,7 +38,7 @@ bool dots = false;
 uint32_t resetMillis = 0L;
 // Display new time on the tubes
 void digitalClockDisplay(time_t time) {
-    if (offline) return;
+    //if (offline) return;
     uint32_t nowMillis = millis() - resetMillis;
     if (dots) {
         if (nowMillis < 20) {
@@ -50,6 +50,14 @@ void digitalClockDisplay(time_t time) {
         tube.show(hour(time), minute(time), second(time));
     }
     //dots = !dots;
+}
+
+void displayNumber(uint32_t number) {
+    // 100s
+    int t1 = number % 100;
+    int t2 = number / 100 % 100;
+    int t3 = number / 10000 % 100;
+    tube.show(t3, t2, t1);
 }
 
 
@@ -82,21 +90,34 @@ void setup() {
 
 time_t prevDisplay = 0; // when the digital clock was displayed
 time_t localTime;
+
+int updatesPerSecond = 0;
+int updates = 0;
 void loop() {
-    ntpClient.processNtpPacket();
-    // @TODO: Do clever updates based on how long ago we synced
-    if(lastUpdate + 2000L < millis() ) {
-        lastUpdate = millis();
-        ntpClient.update();
-    }
+    while (1) {
+        ntpClient.processNtpPacket();
+        // @TODO: Do clever updates based on how long ago we synced
+        if(lastUpdate + 2000L < millis() ) {
+            lastUpdate = millis();
+            ntpClient.update();
+            continue;
+        }
 
-    // Calculate the local time every second
-    if (now() != prevDisplay) {
-        prevDisplay = now();
-        resetMillis = millis();
-        localTime = UK.toLocal(now(), &tcr);
-    }
+        // Calculate the local time every second
+        if (now() != prevDisplay) {
+            prevDisplay = now();
+            resetMillis = millis();
+            localTime = UK.toLocal(now(), &tcr);
+            updatesPerSecond = updates;
+            updates = 0;
+        }
+        updates++;
 
-    // Display the time every loop
-    digitalClockDisplay(localTime);
+        if (offline) {
+            displayNumber(updatesPerSecond);
+        } else {
+            // Display the time every loop
+            digitalClockDisplay(localTime);
+        }
+    }
 }
