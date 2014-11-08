@@ -26,10 +26,10 @@ Tube tube(clockPin, dataPin, latchPin);
 static uint8_t macAddress[6] = { 0x54,0x55,0x58,0x10,0x00,0x25};
 NtpClient ntpClient(macAddress);
 
+volatile int offline = false;
 //Disable tubes on any UDP request
-void udpSerialPrint(const char *data, word len) {
-    tube.show(-1,-1,-1);
-    while(1);
+void switchTubeDisplayMode(const char *data, word len) {
+    offline = !offline;
 }
 
 
@@ -38,6 +38,7 @@ bool dots = false;
 uint32_t resetMillis = 0L;
 // Display new time on the tubes
 void digitalClockDisplay(time_t time) {
+    if (offline) return;
     uint32_t nowMillis = millis() - resetMillis;
     if (dots) {
         if (nowMillis < 20) {
@@ -58,7 +59,7 @@ void syncTime(uint32_t time)
     // Set it into hardware clock
     resetMillis = millis();
     setTime(time);
-    ntpClient.udpSend("Updated from NTP\n", "192.168.15.25", 8000);
+    //ntpClient.udpSend("Updated from NTP\n", "192.168.15.25", 8000);
 
     // Flash the dots to say that we are synced
     //tube.show(0,0,0);
@@ -74,7 +75,7 @@ void setup() {
     tube.show(-1,-1,1);
     int result = ntpClient.init();
     tube.show(-1,-1,2);
-    ntpClient.udpListen(&udpSerialPrint, 1337);
+    ntpClient.udpListen(&switchTubeDisplayMode, 1337);
     tube.show(-1,-1,3);
     lastUpdate = millis();
 }
