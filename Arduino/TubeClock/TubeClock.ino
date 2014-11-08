@@ -52,7 +52,7 @@ void digitalClockDisplay(time_t time) {
     //dots = !dots;
 }
 
-void displayNumber(uint32_t number) {
+void displayNumber(int number) {
     // 100s
     int t1 = number % 100;
     int t2 = number / 100 % 100;
@@ -78,6 +78,11 @@ void syncTime(uint32_t time)
 uint32_t lastUpdate = 0L;
 void setup() {
     // Go through a POST sequence
+    tube.show(-1,-1,-1);
+    delay(1000);
+    tube.degauss(1);
+    tube.show(-1,-1,-1);
+    delay(1000);
     tube.show(-1,-1,0);
     ntpClient.setNtpCallback(syncTime);
     tube.show(-1,-1,1);
