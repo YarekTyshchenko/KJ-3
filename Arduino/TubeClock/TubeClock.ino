@@ -32,6 +32,7 @@ void switchTubeDisplayMode(const char *data, word len) {
     offline = !offline;
 }
 
+bool inSync = false;
 
 uint32_t timeout = 0;
 bool dots = false;
@@ -67,6 +68,7 @@ void syncTime(uint32_t time)
     // Set it into hardware clock
     resetMillis = millis();
     setTime(time);
+    inSync = true;
     //ntpClient.udpSend("Updated from NTP\n", "192.168.15.25", 8000);
 
     // Flash the dots to say that we are synced
@@ -76,6 +78,7 @@ void syncTime(uint32_t time)
 }
 
 uint32_t lastUpdate = 0L;
+uint32_t lastSync = 0L;
 void setup() {
     // Go through a POST sequence
     tube.show(-1,-1,-1);
@@ -88,9 +91,8 @@ void setup() {
     tube.show(-1,-1,1);
     int result = ntpClient.init();
     tube.show(-1,-1,2);
-    ntpClient.udpListen(&switchTubeDisplayMode, 1337);
+    //ntpClient.udpListen(&switchTubeDisplayMode, 1337);
     tube.show(-1,-1,3);
-    lastUpdate = millis();
 }
 
 time_t prevDisplay = 0; // when the digital clock was displayed
@@ -101,8 +103,14 @@ int updates = 0;
 void loop() {
     while (1) {
         ntpClient.processNtpPacket();
-        // @TODO: Do clever updates based on how long ago we synced
-        if(lastUpdate + 2000L < millis() ) {
+
+        // Schedule NTP update
+        if (lastSync + 3600000L < millis() ) {
+            inSync = false;
+        }
+
+        // If update is required, try it
+        if(!inSync && lastUpdate + 10000L < millis() ) {
             lastUpdate = millis();
             ntpClient.update();
             continue;

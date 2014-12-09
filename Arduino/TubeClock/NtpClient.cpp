@@ -7,7 +7,7 @@ byte Ethernet::buffer[BUFFER_SIZE];
 static uint8_t myip[4] = { 192,168,15,78 };
 static uint8_t gwip[4] = { 192,168,15,1 };
 uint8_t clientPort = 123;
-static uint8_t ntpip[4] = { 192,168,15,25 };
+static uint8_t ntpip[4] = { 129,6,15,29 };
 uint32_t timeLong;
 udpCallback _udpCallbackPointer;
 void _udpCallback(word port, byte ip[4], const char *data, word len) {
