@@ -26,55 +26,19 @@ Tube tube(clockPin, dataPin, latchPin);
 static uint8_t macAddress[6] = { 0x54,0x55,0x58,0x10,0x00,0x25};
 NtpClient ntpClient(macAddress);
 
-volatile int offline = false;
-//Disable tubes on any UDP request
-void switchTubeDisplayMode(const char *data, word len) {
-    offline = !offline;
-}
-
 bool inSync = false;
 
-uint32_t timeout = 0;
-bool dots = false;
-uint32_t resetMillis = 0L;
 // Display new time on the tubes
 void digitalClockDisplay(time_t time) {
-    //if (offline) return;
-    uint32_t nowMillis = millis() - resetMillis;
-    if (dots) {
-        if (nowMillis < 20) {
-            tube.flashDots(2);
-        } else {
-            tube.show(-1,-1,-1);
-        }
-    } else {
-        tube.show(hour(time), minute(time), second(time));
-    }
-    //dots = !dots;
+    tube.show(hour(time), minute(time), second(time));
 }
-
-void displayNumber(int number) {
-    // 100s
-    int t1 = number % 100;
-    int t2 = number / 100 % 100;
-    int t3 = number / 10000 % 100;
-    tube.show(t3, t2, t1);
-}
-
 
 // Time sync callback function
 void syncTime(uint32_t time)
 {
     // Set it into hardware clock
-    resetMillis = millis();
     setTime(time);
     inSync = true;
-    //ntpClient.udpSend("Updated from NTP\n", "192.168.15.25", 8000);
-
-    // Flash the dots to say that we are synced
-    //tube.show(0,0,0);
-    //delay(100);
-    //digitalClockDisplay();
 }
 
 uint32_t lastUpdate = 0L;
@@ -91,15 +55,11 @@ void setup() {
     tube.show(-1,-1,1);
     int result = ntpClient.init();
     tube.show(-1,-1,2);
-    //ntpClient.udpListen(&switchTubeDisplayMode, 1337);
-    tube.show(-1,-1,3);
 }
 
 time_t prevDisplay = 0; // when the digital clock was displayed
 time_t localTime;
 
-int updatesPerSecond = 0;
-int updates = 0;
 void loop() {
     while (1) {
         ntpClient.processNtpPacket();
@@ -121,15 +81,6 @@ void loop() {
             prevDisplay = now();
             resetMillis = millis();
             localTime = UK.toLocal(now(), &tcr);
-            updatesPerSecond = updates;
-            updates = 0;
-        }
-        updates++;
-
-        if (offline) {
-            displayNumber(updatesPerSecond);
-        } else {
-            // Display the time every loop
             digitalClockDisplay(localTime);
         }
     }
