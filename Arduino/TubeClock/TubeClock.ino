@@ -1,87 +1,36 @@
-#include "Tube.h"
 #include "NtpClient.h"
 
 // Libraries
 #include <EtherCard.h>
-#include <Time.h>
-#include <Timezone.h>
-
-//United Kingdom (London, Belfast)
-TimeChangeRule BST = {"BST", Last, Sun, Mar, 1, 60}; //British Summer Time
-TimeChangeRule GMT = {"GMT", Last, Sun, Oct, 2, 0};  //Standard Time
-Timezone UK(BST, GMT);
-TimeChangeRule *tcr;
-
-//Pin connected to ST_CP of 74HC595
-int latchPin = 6; //10
-//Pin connected to SH_CP of 74HC595
-int clockPin = 5; //12
-////Pin connected to DS of 74HC595
-int dataPin = 7; //11
-
-// Setup the tube display interface
-Tube tube(clockPin, dataPin, latchPin);
 
 // @TODO: Add an array of ntp servers
 static uint8_t macAddress[6] = { 0x54,0x55,0x58,0x10,0x00,0x25};
 NtpClient ntpClient(macAddress);
-
-bool inSync = false;
-
-// Display new time on the tubes
-void digitalClockDisplay(time_t time) {
-    tube.show(hour(time), minute(time), second(time));
-}
-
-// Time sync callback function
-void syncTime(uint32_t time)
+//const char *data, uint16_t len
+void foo()
 {
-    // Set it into hardware clock
-    setTime(time);
-    inSync = true;
+    //Serial.println(data);
+    Serial.println("1");
 }
-
-uint32_t lastUpdate = 0L;
-uint32_t lastSync = 0L;
 void setup() {
     // Go through a POST sequence
-    tube.show(-1,-1,-1);
+    //ntpClient.setNtpCallback(syncTime);
+    pinMode(6, OUTPUT);
     delay(1000);
-    tube.degauss(1);
-    tube.show(-1,-1,-1);
+    Serial.begin(9600);
+    Serial.println("Foo");
+    digitalWrite(6, HIGH);
     delay(1000);
-    tube.show(-1,-1,0);
-    ntpClient.setNtpCallback(syncTime);
-    tube.show(-1,-1,1);
-    int result = ntpClient.init();
-    tube.show(-1,-1,2);
+    digitalWrite(6, LOW);
+    Serial.println(ntpClient.init());
+    digitalWrite(6, HIGH);
+    ntpClient.setUdpCallback(foo);
+    uint16_t port = 8000;
+    ntpClient.udpListen(port);
 }
 
-time_t prevDisplay = 0; // when the digital clock was displayed
-time_t localTime;
-
 void loop() {
-    while (1) {
+    //while (1) {
         ntpClient.processNtpPacket();
-
-        // Schedule NTP update
-        if (lastSync + 3600000L < millis() ) {
-            inSync = false;
-        }
-
-        // If update is required, try it
-        if(!inSync && lastUpdate + 10000L < millis() ) {
-            lastUpdate = millis();
-            ntpClient.update();
-            continue;
-        }
-
-        // Calculate the local time every second
-        if (now() != prevDisplay) {
-            prevDisplay = now();
-            resetMillis = millis();
-            localTime = UK.toLocal(now(), &tcr);
-            digitalClockDisplay(localTime);
-        }
-    }
+    //}
 }

@@ -11,7 +11,9 @@ static uint8_t ntpip[4] = { 129,6,15,29 };
 uint32_t timeLong;
 udpCallback _udpCallbackPointer;
 void _udpCallback(word port, byte ip[4], const char *data, word len) {
-    _udpCallbackPointer(data, len);
+    //_udpCallbackPointer(data, len);
+    Serial.println(data);
+    _udpCallbackPointer();
 }
 
 // ============================== Move to NTPClient.h ==========================
@@ -35,11 +37,12 @@ int NtpClient::init()
         return -1;
     }
 
-    if (!ether.dhcpSetup()) {
+    //if (!ether.dhcpSetup()) {
         ether.staticSetup(myip, gwip);
-        //while (ether.clientWaitingGw()) {
-        //ether.packetLoop(ether.packetReceive());
-    }
+        while (ether.clientWaitingGw()) {
+            ether.packetLoop(ether.packetReceive());
+        }
+    //}
 
     return 0;
 }
@@ -77,8 +80,12 @@ void NtpClient::setNtpCallback(ntpCallback callbackPointer) {
     _callbackPointer = callbackPointer;
 }
 
-void NtpClient::udpListen(udpCallback callback, uint16_t port) {
-    _udpCallbackPointer = callback;
+void NtpClient::setUdpCallback(udpCallback callbackPointer) {
+    _udpCallbackPointer = callbackPointer;
+    Serial.println(_udpCallbackPointer, HEX);
+}
+
+void NtpClient::udpListen(uint16_t port) {
     ether.udpServerListenOnPort(&_udpCallback, port);
 }
 
