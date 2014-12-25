@@ -9,12 +9,6 @@ static uint8_t gwip[4] = { 192,168,15,1 };
 uint8_t clientPort = 123;
 static uint8_t ntpip[4] = { 129,6,15,29 };
 uint32_t timeLong;
-udpCallback _udpCallbackPointer;
-void _udpCallback(word port, byte ip[4], const char *data, word len) {
-    //_udpCallbackPointer(data, len);
-    Serial.println(data);
-    _udpCallbackPointer();
-}
 
 // ============================== Move to NTPClient.h ==========================
 // IP and netmask allocated by DHCP
@@ -80,18 +74,17 @@ void NtpClient::setNtpCallback(ntpCallback callbackPointer) {
     _callbackPointer = callbackPointer;
 }
 
-void NtpClient::setUdpCallback(udpCallback callbackPointer) {
-    _udpCallbackPointer = callbackPointer;
-    Serial.println(_udpCallbackPointer, HEX);
-}
-
-void NtpClient::udpListen(uint16_t port) {
-    ether.udpServerListenOnPort(&_udpCallback, port);
+void NtpClient::udpListen(udpCallback callback, uint16_t port) {
+    ether.udpServerListenOnPort(callback, port);
 }
 
 void NtpClient::udpSend(char payload[], char address[], uint8_t port) {
     uint8_t ipDestinationAddress[4];
     ether.parseIp(ipDestinationAddress, address);
     ether.sendUdp(payload, sizeof(payload), 5678, ipDestinationAddress, port);
+}
+
+void NtpClient::makeUdpReply(const char *data, uint8_t len, uint16_t port) {
+    ether.makeUdpReply(data, len, port);
 }
 
