@@ -5,7 +5,7 @@
 #include <EtherCard.h>
 
 typedef void (*ntpCallback)(uint32_t);
-typedef void (*udpCallback)(const char *data, uint16_t len);
+typedef void (*udpCallback)(word port, byte ip[4], const char *data, word len);
 
 class NtpClient
 {
@@ -17,10 +17,10 @@ public:
     void setNtpCallback(ntpCallback callbackPointer);
     void udpListen(udpCallback callback, uint16_t port);
     void udpSend(char payload[], char address[], uint8_t port);
+    void makeUdpReply(const char *data, uint8_t len, uint16_t port);
 
 private:
     uint8_t *_macAddress;
     ntpCallback _callbackPointer;
-    udpCallback _udpCallbackPointer;
 };
 #endif
