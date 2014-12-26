@@ -1,8 +1,12 @@
+#include "Arduino.h"
+
+#include "Tube.h"
 #include "NtpClient.h"
 
 // Libraries
 #include <EtherCard.h>
 #include <ArduinoJson.h>
+#include <Time.h>
 
 // @TODO: Add an array of ntp servers
 static uint8_t macAddress[6] = { 0x54,0x55,0x58,0x10,0x00,0x25 };
@@ -12,7 +16,8 @@ int frameRate = 0;
 bool light = true;
 
 void udpListen(word port, byte ip[4], const char *data, word len) {
-    Serial.println(light);
+    //Serial.println(updates);
+    //Serial.println(frameRate);
     light = !light;
     StaticJsonBuffer<200> jsonBuffer;
     JsonObject& root = jsonBuffer.parseObject(const_cast<char*>(data));
@@ -31,13 +36,13 @@ void udpListen(word port, byte ip[4], const char *data, word len) {
 
 void switchModes(JsonObject& root) {
     int mode = root["mode"];
-    switch (mode) {
-        case 1: // Sync now
-        case 2: // Display of frame rate
-        case 3: // Display timer
-        case 4: // Increment/decrement timer
-        default: // Normal display mode
-    }
+    // switch (mode) {
+    //     case 1: // Sync now
+    //     case 2: // Display of frame rate
+    //     case 3: // Display timer
+    //     case 4: // Increment/decrement timer
+    //     default: // Normal display mode
+    // }
 }
 
 void populateStats(JsonObject& stats) {
@@ -54,10 +59,18 @@ void setup() {
     ntpClient.udpListen(udpListen, port);
     digitalWrite(6, HIGH);
 }
-
+int updates = 0;
+time_t prevTime;
 void loop() {
-    //while (1) {
+    // while (1) {
         ntpClient.processNtpPacket();
         digitalWrite(6, light);
-    //}
+
+        updates++;
+        if (prevTime != now()) {
+            prevTime = now();
+            frameRate = updates;
+            updates = 0;
+        }
+    // }
 }

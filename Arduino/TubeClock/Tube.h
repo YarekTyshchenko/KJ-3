@@ -8,8 +8,9 @@ class Tube
   public:
     Tube(int clockPin, int dataPin, int latchPin);
     void show(int n1, int n2, int n3);
-    void flashDots(int state);
+    void flashDots(int state1, int state2, int state3, int state4, int state5, int state6);
     void degauss(int passes);
+    void tick();
   private:
     unsigned long _mapTube1(int number);
     unsigned long _mapTube2(int number);

@@ -15,6 +15,13 @@ Tube::Tube(int clockPin, int dataPin, int latchPin)
 
 }
 
+int dotsDuty = 10;
+// 
+void Tube::tick() {
+    //
+    
+}
+
 // Integers for each of the digits
 // @TODO: make -1 show nothing, and -2 -3 (-4) show dots
 // Input | LD | RD |
@@ -79,10 +86,10 @@ void Tube::_shiftOut(unsigned long _data1, unsigned long _data2, unsigned long _
     digitalWrite(_latchPin, HIGH);
 }
 
-void Tube::flashDots(int state) {
-    unsigned int data1 = (_mapDot1(state) * 4096) + _mapDot2(state);
-    unsigned int data2 = (_mapDot3(state) * 4096) + _mapDot4(state);
-    unsigned int data3 = (_mapDot5(state) * 4096) + _mapDot6(state);
+void Tube::flashDots(int state1, int state2, int state3, int state4, int state5, int state6) {
+    unsigned int data1 = (_mapDot1(state1) * 4096) + _mapDot2(state2);
+    unsigned int data2 = (_mapDot3(state3) * 4096) + _mapDot4(state4);
+    unsigned int data3 = (_mapDot5(state5) * 4096) + _mapDot6(state6);
     _shiftOut(data1, data2, data3);
 }
 
