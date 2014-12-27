@@ -26,14 +26,15 @@ Tube tube(clockPin, dataPin, latchPin);
 // @TODO: Add an array of ntp servers
 static uint8_t macAddress[6] = { 0x54,0x55,0x58,0x10,0x00,0x25};
 NtpClient ntpClient(macAddress);
+time_t localTime;
 
 bool inSync = false;
 int frameRate = 0;
+uint32_t millisPerSecond = 0L;
+uint32_t resetMillis;
 
-bool light = true;
-
+int mode = 1; // 1 default
 void udpListen(word port, byte ip[4], const char *data, word len) {
-    light = !light;
     StaticJsonBuffer<200> jsonBuffer;
     JsonObject& root = jsonBuffer.parseObject(const_cast<char*>(data));
     if (!root.success()) {
@@ -41,33 +42,74 @@ void udpListen(word port, byte ip[4], const char *data, word len) {
     }
 
     JsonObject& stats = jsonBuffer.createObject();
-    stats["mode"] = root["mode"];
     populateStats(stats);
-    switchModes(root);
+    switchMode(root);
     char buffer[256];
     stats.printTo(buffer, sizeof(buffer));
     ntpClient.makeUdpReply(buffer, strlen(buffer), port);
 }
 
-void switchModes(JsonObject& root) {
-    int mode = root["mode"];
-    // switch (mode) {
-    //     case 1: // Sync now
-    //     case 2: // Display of frame rate
-    //     case 3: // Display timer
-    //     case 4: // Increment/decrement timer
-    //     default: // Normal display mode
-    // }
+int timer = 30; // Seconds on a timer
+void switchMode(JsonObject& root) {
+    int commandMode = root["mode"];
+    switch (commandMode) {
+        case 2: // Display of frame rate
+            mode = 2;
+            break;
+        case 3: // Display timer
+            mode = 3;
+            break;
+        case 4: // Increment/decrement timer
+            timer += root["timer"].as<int>();
+            break;
+        //case 5: return 5; // Display time since bootup
+        //case 6: return 6; // Sync now
+        default: // Default, return to normal display
+            break;
+    }
 }
 
 void populateStats(JsonObject& stats) {
     stats["frameRate"] = frameRate;
-    stats["light"] = light;
+    stats["timer"] = timer;
+    stats["mode"] = mode;
+    stats["mps"] = millisPerSecond;
+    stats["nowMillis"] = millis() - resetMillis;
 }
 
-// Display new time on the tubes
-void digitalClockDisplay(time_t time) {
-    tube.show(hour(time), minute(time), second(time));
+time_t timerStart = NULL;
+void display() {
+    switch (mode) {
+        case 1:
+            tube.show(
+                hour(localTime),
+                minute(localTime),
+                second(localTime)
+            );
+            break;
+        case 2:
+            displayNumber(frameRate);
+            break;
+        case 3: // Mode 3 = timer running
+            if (NULL == timerStart) {
+                timerStart = localTime;
+            }
+            int secondsLeft = (timerStart + timer) - localTime;
+
+            if (secondsLeft <= 0) {
+                // Flash the zeroes for a few seconds
+                mode = 1;
+                timerStart = NULL;
+            }
+
+            tube.show(
+                secondsLeft / 60 % 60,
+                secondsLeft % 60,
+                (millis() - resetMillis) / 10
+            );
+            break;
+
+    }
 }
 
 // Time sync callback function
@@ -89,7 +131,6 @@ uint32_t lastUpdate = 0L;
 uint32_t lastSync = 0L;
 void setup() {
     // Go through a POST sequence
-    pinMode(7, OUTPUT);
     tube.show(-1,-1,-1);
     delay(1000);
     tube.degauss(1);
@@ -105,7 +146,7 @@ void setup() {
 }
 
 time_t prevDisplay = 0; // when the digital clock was displayed
-time_t localTime;
+
 
 int updates = 0;
 void loop() {
@@ -130,10 +171,13 @@ void loop() {
             frameRate = updates;
             updates = 0;
 
+            // See how many millis we have
+            millisPerSecond = millis() - resetMillis;
+            resetMillis = millis();
+
             localTime = UK.toLocal(now(), &tcr);
-            digitalClockDisplay(localTime);
         }
+        display();
         updates++;
-        digitalWrite(7, light);
     }
 }
