@@ -33,8 +33,9 @@ int NtpClient::init()
 
     if (!ether.dhcpSetup()) {
         ether.staticSetup(myip, gwip);
-        //while (ether.clientWaitingGw()) {
-        //ether.packetLoop(ether.packetReceive());
+        while (ether.clientWaitingGw()) {
+            ether.packetLoop(ether.packetReceive());
+        }
     }
 
     return 0;

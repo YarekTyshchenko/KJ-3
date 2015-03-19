@@ -29,7 +29,7 @@ NtpClient ntpClient(macAddress);
 time_t localTime;
 
 bool inSync = false;
-int frameRate = 0;
+unsigned int frameRate = 0;
 uint32_t millisPerSecond = 0L;
 uint32_t resetMillis;
 
@@ -49,10 +49,13 @@ void udpListen(word port, byte ip[4], const char *data, word len) {
     ntpClient.makeUdpReply(buffer, strlen(buffer), port);
 }
 
-int timer = 30; // Seconds on a timer
+unsigned int timer = 30; // Seconds on a timer
 void switchMode(JsonObject& root) {
     int commandMode = root["mode"];
     switch (commandMode) {
+        case 1: // Reset to default mode
+            mode = 1;
+            break;
         case 2: // Display of frame rate
             mode = 2;
             break;
@@ -63,8 +66,19 @@ void switchMode(JsonObject& root) {
             timer += root["timer"].as<int>();
             break;
         //case 5: return 5; // Display time since bootup
-        //case 6: return 6; // Sync now
-        default: // Default, return to normal display
+        case 6: // Sync now
+            inSync = false;
+            break;
+        case 7: // Disable tubes ready for code push
+            mode = 4;
+            break;
+        case 8: // seconds to next sync
+            mode = 5;
+            break;
+        case 9:
+            mode = 6;
+            break;
+        default: // Default, do nothing
             break;
     }
 }
@@ -78,8 +92,12 @@ void populateStats(JsonObject& stats) {
 }
 
 time_t timerStart = NULL;
+uint32_t lastUpdate = 0L;
+uint32_t lastSync = 0L;
 void display() {
+    int secondsLeft;
     switch (mode) {
+        case 0: break; // noop
         case 1:
             tube.show(
                 hour(localTime),
@@ -94,10 +112,10 @@ void display() {
             if (NULL == timerStart) {
                 timerStart = localTime;
             }
-            int secondsLeft = (timerStart + timer) - localTime;
+            secondsLeft = (timerStart + timer) - localTime;
 
             if (secondsLeft <= 0) {
-                // Flash the zeroes for a few seconds
+                // @TODO: Flash the zeroes for a few seconds
                 mode = 1;
                 timerStart = NULL;
             }
@@ -107,6 +125,20 @@ void display() {
                 secondsLeft % 60,
                 (millis() - resetMillis) / 10
             );
+            break;
+        case 4: // Disable tubes ready for code push
+            tube.show(-1,-1,-1);
+            mode = 0;
+            break;
+        case 5:
+            if (!inSync) {
+                displayNumber(lastUpdate + 10000L - millis());
+            } else {
+                displayNumber(lastSync + 3600000L - millis());
+            }
+            break;
+        case 6:
+            displayNumber(millis());
             break;
 
     }
@@ -118,17 +150,16 @@ void syncTime(uint32_t time)
     // Set it into hardware clock
     setTime(time);
     inSync = true;
+    //lastSync = millis(); //@TODO: Figure out why this isn't needed
 }
 
-void displayNumber(int number) {
+void displayNumber(unsigned long number) {
     int t1 = number % 100;
     int t2 = number / 100 % 100;
     int t3 = number / 10000 % 100;
     tube.show(t3, t2, t1);
 }
 
-uint32_t lastUpdate = 0L;
-uint32_t lastSync = 0L;
 void setup() {
     // Go through a POST sequence
     tube.show(-1,-1,-1);
@@ -148,12 +179,13 @@ void setup() {
 time_t prevDisplay = 0; // when the digital clock was displayed
 
 
-int updates = 0;
+unsigned int updates = 0;
 void loop() {
     while (1) {
         ntpClient.processNtpPacket();
 
         // Schedule NTP update
+        // 3600000L
         if (lastSync + 3600000L < millis() ) {
             inSync = false;
         }
